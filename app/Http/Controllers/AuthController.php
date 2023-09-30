@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
 use App\Http\Controllers\RoleController;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -55,6 +56,10 @@ class AuthController extends Controller
 
         $user->assignRole($request["role"]);
 
+        if (auth()->id() === 1) {
+            return redirect(route("home"));
+        }
+
         if ($user) {
             auth("web")->login($user);
         }
@@ -68,6 +73,10 @@ class AuthController extends Controller
             "email" => ["required", "email", "string"],
             "password" => ["required"]
         ]);
+
+        if(DB::table('users')->where('email', '=', $data["email"])->value('active') == 0) {
+            return redirect(route("login"))->withErrors(["email" => "Вы были отключены администратором и не можете войти"]);
+        }
 
         if(auth("web")->attempt($data)) {
             return redirect(route("home"));

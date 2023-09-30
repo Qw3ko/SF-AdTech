@@ -94,11 +94,55 @@ class OfferController extends Controller
 
         if($user_offer->exists() && $offer_is_active === 1)
         {
-            $query = DB::table('offers')
-            ->where('id', '=', $id);
-            $query->increment('number_of_transitions');
+            $employer_id = DB::table('offers')
+            ->where('id', '=', $id)->get('employer_id');
+            $employer_id = json_decode($employer_id, true);
 
-            return Redirect::to($offer_url);
+
+            $transition_cost = DB::table('offers')
+            ->where('id', '=', $id)->get('transition_cost');
+            $transition_cost = json_decode($transition_cost, true);
+
+            $employer_balance = DB::table('users')
+            ->where('id', '=', $employer_id[0])->get('balance');
+            $employer_balance = json_decode($employer_balance, true);
+
+            $webmaster_balance = DB::table('users')
+            ->where('id', '=', auth()->id())->get('balance');
+            $webmaster_balance = json_decode($webmaster_balance, true);
+
+            $sys_balance = DB::table('users')
+            ->where('id', '=', 1)->get('balance');
+            $sys_balance = json_decode($sys_balance, true);
+
+
+            if($employer_balance[0]['balance'] > $transition_cost[0]['transition_cost'])
+            {
+                $employer_balance = $employer_balance[0]['balance'] - $transition_cost[0]['transition_cost'];
+
+                $percent = $transition_cost[0]['transition_cost'] / 100 * 20;
+
+                $sys_balance = $sys_balance[0]['balance'] + $percent;
+
+                $user_percent = $transition_cost[0]['transition_cost'] - $percent;
+
+                $webmaster_balance = $webmaster_balance[0]['balance'] + $user_percent;
+
+                DB::table('users')->where('id', '=', 1)->update(['balance' => $sys_balance]);
+
+                DB::table('users')->where('id', '=', auth()->id())->update(['balance' => $webmaster_balance]);
+
+                DB::table('users')->where('id', '=', $employer_id[0]['employer_id'])->update(['balance' => $employer_balance]);
+
+                $query = DB::table('offers')
+                ->where('id', '=', $id);
+                $query->increment('number_of_transitions');
+
+                return Redirect::to($offer_url);
+            }
+            
+            return redirect(route("404"));
+            
         }
         return redirect(route("404"));
         }
@@ -113,8 +157,16 @@ class OfferController extends Controller
 
         $offers = DB::table('offers')->get();
 
+        $users = DB::table('users')->get();
+
         $offers_of_webmasters = DB::table('offers_of_user')->get();
 
-        return view('home', ['offers' => $offers, 'offers_of_webmasters' => $offers_of_webmasters, 'i' => $i, 'e' => $e]);
+        $current_balance = DB::table('users')->where('id', '=', auth()->id())->get();
+
+        $sum_transitions =  $offers->sum('number_of_transitions');
+
+        $sum_urls =  $offers->sum('number_of_subscribers');
+
+        return view('home', ['offers' => $offers, 'users' => $users, 'offers_of_webmasters' => $offers_of_webmasters, 'sum_transitions' => $sum_transitions, 'sum_urls' => $sum_urls, 'current_balance' => $current_balance, 'i' => $i, 'e' => $e]);
     }
 }

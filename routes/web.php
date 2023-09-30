@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BalanceController;
 use App\Http\Controllers\ChartsController;
 use App\Http\Controllers\OfferController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -38,8 +40,12 @@ Route::post('/login_process', [AuthController::class, 'login'])->name('login_pro
 
 Route::get('/logout', [AuthController::class, 'logout'])->name('logout');
 
+Route::post('/disable_user', [UserController::class, 'disableUser'])->name('disable_user');
+
 Route::post('/create_offer', [OfferController::class, 'createOffer'])->name('create_offer');
 Route::post('/disable_offer', [OfferController::class, 'disableOffer'])->name('disable_offer');
+
+Route::post('/top_up_balance', [BalanceController::class, 'topUpBalance'])->name('top_up_balance');
 
 Route::post('/sign_up_offer', [OfferController::class, 'signUpOffer'])->name('signUpOffer');
 

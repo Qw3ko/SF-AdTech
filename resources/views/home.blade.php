@@ -9,15 +9,30 @@
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark justify-content-between">
         <a class="navbar-brand" href="#">
             <img src="{{ asset('storage') . '/favicon.svg' }}" width="30" height="30" class="d-inline-block align-top" alt="">
             SF-AdTech
         </a>
         @auth("web")
         <ul class="navbar-nav ml-auto">
+          <span class="navbar-text" style="margin-right: 15px;">
+            @role('Работодатель')
+            @foreach ($current_balance as $balance)
+            Баланс: {{$balance->balance}} рублей
+            @endforeach
+            <button style="margin-left: 15px;" type="button" class="btn btn-secondary" data-toggle="modal" data-target="#exampleModalCenter">
+              Пополнить
+            </button>
+            @endrole
+            @role('Веб-мастер')
+            @foreach ($current_balance as $balance)
+            Баланс: {{$balance->balance}} рублей
+            @endforeach
+            @endrole
+          </span>
             <li class="nav-item">
-                <a class="nav-link" href="{{ route("logout") }}">Выйти</a>
+              <a class="nav-link" href="{{ route("logout") }}">Выйти</a>
             </li>
         </ul>
         @endauth
@@ -96,42 +111,96 @@
         </div>
     </div>
 </div>
-    <table class="table">
-        <thead>
-          <tr>
-            <th scope="col">#</th>
-            <th scope="col">Имя оффера</th>
-            <th scope="col">Стоимость перехода за клик (в руб.)</th>
-            <th scope="col">Целевой URL</th>
-            <th scope="col">Тема сайта</th>
-            <th scope="col"></th>
-            <th scope="col"></th>
-          </tr>
-        </thead>
-        <tbody>
-          @foreach ($offers as $offer)
-          @if ($offer->employer_id === auth()->id())
-          <tr>
-            <form action="{{ route("disable_offer") }}" method="post">
-              @csrf
-              <th scope="row"><input type="hidden" name="id" value="{{ $offer->id }}"/>{{ ++$i }}</th>
-              <td>{{ $offer->name }}</td>
-              <td>{{ $offer->transition_cost }}</td>
-              <td>{{ $offer->target_url }}</td>
-              <td>{{ $offer->site_theme }}</td>
-              @if ($offer->active === 1)
-              <td><button type="submit" class="btn btn-primary">Выключить</button></td>
-              @else
-              <td><button type="submit" class="btn btn-primary">Включить</button></td>
-              @endif
-              <td><button formaction="{{ route("chart", [$offer->id]) }}" class="btn btn-primary">Статистика оффера</button></td>
-            </form>
-          </tr>
-          @endif
-          @endforeach
-        </tbody>
-      </table>
+<div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLongTitle">Пополнение баланса</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form action="{{ route("top_up_balance") }}" method="post">
+          @csrf
+          <div class="form-group">
+            <label for="offer-name" class="col-form-label">Сумма пополнения:</label>
+            <input type="text" class="form-control" id="balance" name="balance" required autofocus>
+          </div>
+          @error('balance')
+          <div class="alert alert-danger" role="alert">
+            <p>{{ $message }}</p>
+          </div>
+          @enderror
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+          <button type="submit" class="btn btn-primary">Пополнить</button>
+        </form>
+      </div>
     </div>
+  </div>
+</div>
+<table class="table">
+  <thead>
+    <tr>
+      <th scope="col">#</th>
+      <th scope="col">Имя оффера</th>
+      <th scope="col">Стоимость перехода за клик (в руб.)</th>
+      <th scope="col">Целевой URL</th>
+      <th scope="col">Темы сайта</th>
+      <th scope="col"></th>
+      <th scope="col"></th>
+    </tr>
+  </thead>
+  <tbody>
+    @foreach ($offers as $offer)
+    @if ($offer->employer_id === auth()->id())
+    <tr>
+      <form action="{{ route("disable_offer") }}" method="post">
+        @csrf
+        <th scope="row"><input type="hidden" name="id" value="{{ $offer->id }}"/>{{ ++$i }}</th>
+        <td>{{ $offer->name }}</td>
+        <td>{{ $offer->transition_cost }}</td>
+        <td>{{ $offer->target_url }}</td>
+        <td>{{ $offer->site_theme }}</td>
+        @if ($offer->active === 1)
+        <td><button type="submit" class="btn btn-primary">Выключить</button></td>
+        @else
+        <td><button type="submit" class="btn btn-primary">Включить</button></td>
+        @endif
+      </form>
+    </tr>
+    @endif
+    @endforeach
+  </tbody>
+</table>
+<br>
+<h2>Статистика</h2>
+<br>
+<table class="table">
+  <thead>
+      <tr>
+          <th scope="col">#</th>
+          <th scope="col">Имя оффера</th>
+          <th scope="col">Количество подписанных веб-мастеров</th>
+          <th scope="col">Количество переходов</th>
+      </tr>
+  </thead>
+  <tbody>
+      @foreach ($offers as $offer)
+      @if ($offer->employer_id === auth()->id())
+      <tr>
+          <th scope="row"><input type="hidden" name="id" value="{{ $offer->id }}"/>{{ ++$e }}</th>
+          <td>{{ $offer->name }}</td>
+          <td>{{ $offer->number_of_subscribers }}</td>
+          <td>{{ $offer->number_of_transitions }}</td>
+      </tr>
+      @endif
+      @endforeach
+  </tbody>
+</table>
+</div>
 </div>
 @endrole
 
@@ -200,6 +269,110 @@
       @endforeach
       @endif
       @endforeach
+    </tbody>
+  </table>
+</div>
+@endrole
+@role('Админ')
+<div class="container">
+  <br>
+  <h2>Меню пользователей</h2>
+  <br>
+  <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#exampleModal" data-whatever="@mdo">Создать пользователя</button>
+  <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Создать пользователя</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form action="{{ route("register_process") }}" method="post">
+            @csrf
+            <div class="form-group">
+              <label for="name" class="col-form-label">Имя:</label>
+              <input type="text" class="form-control" id="name" name="name" required autofocus>
+            </div>
+            <div class="form-group">
+              <label for="role" class="col-form-label">Вид деятельности:</label>
+              <select name="role" class="form-control" id="role">
+                <option>Работодатель</option>
+                <option>Веб-мастер</option>
+            </select>
+            </div>
+            <div class="form-group">
+              <label for="email" class="col-form-label">E-Mail:</label>
+              <input type="text" class="form-control" id="email" name="email" required autofocus>
+            </div>
+            <div class="form-group">
+              <label for="password" class="col-form-label">Пароль:</label>
+              <input type="password" class="form-control" id="password" name="password" required autofocus>
+            </div>
+            <div class="form-group">
+              <label for="password_confirmation" class="col-form-label">Подтверждение пароля:</label>
+              <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required autofocus>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Закрыть</button>
+            <button type="submit" class="btn btn-primary">Создать</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  <br>
+  <table class="table">
+    <br>
+    <thead>
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Имя</th>
+        <th scope="col">E-Mail</th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody>
+      @foreach ($users as $user)
+      <tr>
+        <form action="{{ route("disable_user") }}" method="post">
+          @csrf
+          <th scope="row"><input type="hidden" name="id" value="{{ $user->id }}"/>{{ ++$e }}</th>
+          <td>{{ $user->name }}</td>
+          <td>{{ $user->email }}</td>
+          @if ($user->id !== 1)
+          @if ($user->active === 1)
+          <td><button type="submit" class="btn btn-primary">Отключить</button></td>
+          @else
+          <td><button type="submit" class="btn btn-primary">Включить</button></td>
+          @endif
+          @endif
+        </form>
+      </tr>
+      @endforeach
+    </tbody>
+  </table>
+  <br>
+  <h2>Статистика</h2>
+  <br>
+  <table class="table">
+    <thead>
+        <tr>
+            <th scope="col">Доход системы</th>
+            <th scope="col">Количество выданных ссылок</th>
+            <th scope="col">Количество переходов</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach ($current_balance as $balance)
+        <tr>
+            <td>{{ $balance->balance }}</td>
+            <td>{{ $sum_urls }}</td>
+            <td>{{ $sum_transitions }}</td>
+        </tr>
+        @endforeach
     </tbody>
   </table>
 </div>

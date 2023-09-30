@@ -45,22 +45,12 @@
                                 </div>
                                 @enderror
 
-                                <div class="form-group row">
-                                    <div class="col-md-6 offset-md-4">
-                                        <div class="checkbox">
-                                            <label>
-                                                <input type="checkbox" name="remember"> Запомнить меня
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-
                                 <div class="d-flex justify-content-center">
                                     <button type="submit" class="btn btn-primary">
                                         Войти
                                     </button>
                                     <a href="{{ route("register") }}" class="btn btn-link">
-                                        Нету аккаунта?
+                                        Нет аккаунта?
                                     </a>
                                 </div>
                         </div>
